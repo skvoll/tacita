@@ -77,6 +77,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
@@ -202,34 +203,37 @@ private fun SettingsScreen(onEnabledChange: (Boolean) -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 private fun CollapsibleHeader(enabled: Boolean, scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior) {
     val expandedContentAlpha = 1f - scrollBehavior.state.collapsedFraction
+    val headerIconSize = 48.dp + (28.dp * expandedContentAlpha)
+    val titleSize = (22f + 10f * expandedContentAlpha).sp
     LargeTopAppBar(
         title = {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     AndroidView(
                         factory = { viewContext -> ImageView(viewContext).apply { setImageResource(R.drawable.tacita_header_icon) } },
-                        modifier = Modifier.size(48.dp),
+                        modifier = Modifier.size(headerIconSize),
                     )
-                    Spacer(Modifier.width(12.dp))
-                    Text("Tacita", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.width(16.dp))
+                    Text("Tacita", fontSize = titleSize, lineHeight = titleSize, fontWeight = FontWeight.Bold)
                 }
                 Column(modifier = Modifier.graphicsLayer { alpha = expandedContentAlpha }) {
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(12.dp))
                     Text(
                         "Lower media volume when your screen turns off.",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodyLarge,
                     )
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(12.dp))
                     if (enabled) ActiveStatusChip()
                 }
             }
         },
         scrollBehavior = scrollBehavior,
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.background,
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
             scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
         ),
+        expandedHeight = 220.dp,
     )
 }
 
