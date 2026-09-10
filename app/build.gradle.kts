@@ -4,18 +4,28 @@ plugins {
 }
 
 android {
-    namespace = "tacita.app.volkov.one"
+    namespace = "one.volkov.apps.tacita"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "tacita.app.volkov.one"
+        applicationId = "one.volkov.apps.tacita"
         minSdk = 26
         targetSdk = 37
         versionCode = 1
-        versionName = "1.0"
+        versionName = "0.1"
     }
 
     buildFeatures { compose = true }
+    buildTypes {
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
+        }
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

@@ -1,4 +1,4 @@
-package tacita.app.volkov.one
+package one.volkov.apps.tacita
 
 import android.Manifest
 import android.content.Intent

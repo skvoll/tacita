@@ -1,4 +1,4 @@
-package tacita.app.volkov.one
+package one.volkov.apps.tacita
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -19,9 +19,11 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.cancel
+import kotlin.math.roundToInt
 
 class LockMonitorService : Service() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private var screenReceiverRegistered = false
 
     private val screenReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -41,7 +43,7 @@ class LockMonitorService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
 
     override fun onDestroy() {
-        unregisterReceiver(screenReceiver)
+        if (screenReceiverRegistered) unregisterReceiver(screenReceiver)
         serviceScope.cancel()
         super.onDestroy()
     }
@@ -50,19 +52,17 @@ class LockMonitorService : Service() {
 
     private fun adjustVolumeForLock() = serviceScope.launch {
         val settings = SettingsRepository.settings(applicationContext).first()
-        val audioManager = getSystemService(AudioManager::class.java)
+        val audioManager = getSystemService(AudioManager::class.java) ?: return@launch
 
         if (!settings.enabled) return@launch
         if (audioManager.isMusicActive) return@launch
         if (!settings.includeBluetooth && audioManager.hasBluetoothOutput()) return@launch
 
-        audioManager.setStreamVolume(
-            AudioManager.STREAM_MUSIC,
-            (audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) * settings.targetPercent / 100f)
-                .toInt()
-                .coerceIn(0, audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)),
-            0,
-        )
+        val maximumVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+        val targetVolume = (maximumVolume * settings.targetPercent / 100f)
+            .roundToInt()
+            .coerceIn(0, maximumVolume)
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, targetVolume, 0)
     }
 
     private fun AudioManager.hasBluetoothOutput(): Boolean = getDevices(AudioManager.GET_DEVICES_OUTPUTS)
@@ -73,6 +73,7 @@ class LockMonitorService : Service() {
     private fun registerScreenReceiver() {
         val filter = IntentFilter(Intent.ACTION_SCREEN_OFF)
         ContextCompat.registerReceiver(this, screenReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        screenReceiverRegistered = true
     }
 
     private fun createNotificationChannel() {
