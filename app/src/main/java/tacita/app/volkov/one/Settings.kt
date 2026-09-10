@@ -34,7 +34,7 @@ object SettingsRepository {
     }
 
     suspend fun updateTargetVolume(context: Context, targetVolume: Int) {
-        context.dataStore.edit { it[targetVolumeKey] = targetVolume }
+        context.dataStore.edit { it[targetVolumeKey] = targetVolume.coerceAtLeast(0) }
     }
 
     suspend fun updateIncludeBluetooth(context: Context, includeBluetooth: Boolean) {

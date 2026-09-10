@@ -5,6 +5,7 @@
 
     <application
         android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.Tacita">
@@ -23,7 +24,7 @@
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Monitors screen lock events to adjust the user's media volume preference." />
+                android:value="Monitors screen-off events to adjust the user's media volume preference." />
         </service>
     </application>
 </manifest>

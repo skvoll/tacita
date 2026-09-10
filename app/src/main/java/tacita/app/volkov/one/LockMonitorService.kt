@@ -18,6 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.cancel
 
 class LockMonitorService : Service() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -41,6 +42,7 @@ class LockMonitorService : Service() {
 
     override fun onDestroy() {
         unregisterReceiver(screenReceiver)
+        serviceScope.cancel()
         super.onDestroy()
     }
 
@@ -50,6 +52,7 @@ class LockMonitorService : Service() {
         val settings = SettingsRepository.settings(applicationContext).first()
         val audioManager = getSystemService(AudioManager::class.java)
 
+        if (!settings.enabled) return@launch
         if (audioManager.isMusicActive) return@launch
         if (!settings.includeBluetooth && audioManager.hasBluetoothOutput()) return@launch
 
@@ -93,7 +96,7 @@ class LockMonitorService : Service() {
         val bluetoothDeviceTypes: Set<Int> = buildSet {
             add(AudioDeviceInfo.TYPE_BLUETOOTH_A2DP)
             add(AudioDeviceInfo.TYPE_BLUETOOTH_SCO)
-            add(AudioDeviceInfo.TYPE_HEARING_AID)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) add(AudioDeviceInfo.TYPE_HEARING_AID)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) add(AudioDeviceInfo.TYPE_BLE_HEADSET)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) add(AudioDeviceInfo.TYPE_BLE_SPEAKER)
         }

@@ -58,7 +58,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 import kotlin.math.roundToInt
 
 private val Sage = Color(0xFF0C5B43)
@@ -114,11 +116,11 @@ private object TacitaIcons {
 class MainActivity : ComponentActivity() {
     private val notificationPermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission(),
-    ) { startMonitoring() }
+    ) { startMonitoringIfEnabled() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        requestNotificationsThenStart()
+        startMonitoringIfEnabled()
         setContent {
             TacitaTheme {
                 SettingsScreen(onMonitoringChanged = ::updateMonitoring)
@@ -127,7 +129,23 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun updateMonitoring(enabled: Boolean) {
-        if (enabled) requestNotificationsThenStart() else stopService(Intent(this, LockMonitorService::class.java))
+        lifecycleScope.launch {
+            if (enabled) {
+                SettingsRepository.updateEnabled(this@MainActivity, true)
+                requestNotificationsThenStart()
+            } else {
+                stopService(Intent(this@MainActivity, LockMonitorService::class.java))
+                SettingsRepository.updateEnabled(this@MainActivity, false)
+            }
+        }
+    }
+
+    private fun startMonitoringIfEnabled() {
+        lifecycleScope.launch {
+            if (SettingsRepository.settings(this@MainActivity).first().enabled) {
+                requestNotificationsThenStart()
+            }
+        }
     }
 
     private fun requestNotificationsThenStart() {
@@ -169,7 +187,8 @@ private fun SettingsScreen(onMonitoringChanged: (Boolean) -> Unit) {
     val scope = rememberCoroutineScope()
     val audioManager = context.getSystemService(AudioManager::class.java)
     val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-    val targetPercent = if (maxVolume == 0) 0 else settings.targetVolume * 100 / maxVolume
+    val targetVolume = settings.targetVolume.coerceIn(0, maxVolume)
+    val targetPercent = if (maxVolume == 0) 0 else targetVolume * 100 / maxVolume
 
     Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
         Column(
@@ -184,7 +203,7 @@ private fun SettingsScreen(onMonitoringChanged: (Boolean) -> Unit) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text("Tacita", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Medium)
                     Spacer(Modifier.height(4.dp))
-                    Text("Lower media volume when your phone locks", color = MutedText, fontSize = 18.sp)
+                    Text("Lower media volume when your screen turns off", color = MutedText, fontSize = 18.sp)
                 }
                 IconButton(onClick = {}) {
                     Icon(Icons.Default.MoreVert, contentDescription = "More options")
@@ -194,15 +213,12 @@ private fun SettingsScreen(onMonitoringChanged: (Boolean) -> Unit) {
             FeatureCard(containerColor = PaleSage) {
                 SettingIcon(Icons.Default.Lock)
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Enable on lock", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Text("Automatically lower media volume when your phone locks.", color = MutedText)
+                    Text("Enable when screen turns off", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text("Automatically lower media volume when your screen turns off.", color = MutedText)
                 }
                 Switch(
                     checked = settings.enabled,
-                    onCheckedChange = { enabled ->
-                        scope.launch { SettingsRepository.updateEnabled(context, enabled) }
-                        onMonitoringChanged(enabled)
-                    },
+                    onCheckedChange = onMonitoringChanged,
                     modifier = Modifier.semantics { stateDescription = if (settings.enabled) "On" else "Off" },
                 )
             }
@@ -214,7 +230,7 @@ private fun SettingsScreen(onMonitoringChanged: (Boolean) -> Unit) {
                         Spacer(Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text("Target volume", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                            Text("Set the media volume level to use when your phone locks.", color = MutedText)
+                            Text("Set the media volume level to use when your screen turns off.", color = MutedText)
                         }
                         Text("$targetPercent%", color = Sage, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                     }
@@ -248,7 +264,7 @@ private fun SettingsScreen(onMonitoringChanged: (Boolean) -> Unit) {
                             modifier = Modifier.semantics { stateDescription = if (settings.includeBluetooth) "On" else "Off" },
                         )
                     }
-                    InfoPanel()
+                    InfoPanel(includeBluetooth = settings.includeBluetooth)
                 }
             }
 
@@ -256,8 +272,12 @@ private fun SettingsScreen(onMonitoringChanged: (Boolean) -> Unit) {
                 Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("How it works", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                     HowItWorksRow(Icons.Default.PlayArrow, "If media is playing", "Do nothing")
-                    HowItWorksRow(TacitaIcons.Bluetooth, "If Bluetooth audio is connected", "Do nothing by default")
-                    HowItWorksRow(Icons.Default.Lock, "When phone locks and playback is idle", "Lower volume to selected level")
+                    HowItWorksRow(
+                        TacitaIcons.Bluetooth,
+                        "If Bluetooth audio is connected",
+                        if (settings.includeBluetooth) "Apply selected volume" else "Do nothing by default",
+                    )
+                    HowItWorksRow(Icons.Default.Lock, "When screen turns off and playback is idle", "Lower volume to selected level")
                 }
             }
 
@@ -297,14 +317,18 @@ private fun SettingIcon(icon: ImageVector) {
 }
 
 @Composable
-private fun InfoPanel() {
+private fun InfoPanel(includeBluetooth: Boolean) {
     Row(
         modifier = Modifier.fillMaxWidth().background(PaleSage, RoundedCornerShape(18.dp)).padding(16.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Icon(Icons.Default.Info, contentDescription = null, tint = Sage)
         Text(
-            "By default, Tacita ignores Bluetooth audio devices, so it won't change the volume when you're using headphones or a car audio system.",
+            if (includeBluetooth) {
+                "Tacita will also change the volume when Bluetooth headphones, speakers, or car audio are connected."
+            } else {
+                "Tacita ignores Bluetooth audio devices, so it won't change the volume when you're using headphones or a car audio system."
+            },
             color = MutedText,
         )
     }

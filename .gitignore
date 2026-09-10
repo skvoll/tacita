@@ -1,0 +1,11 @@
+# Android/Gradle build products and local machine configuration.
+.gradle/
+.kotlin/
+build/
+**/build/
+local.properties
+
+# Heap dumps and IDE files can be large or machine-specific.
+*.hprof
+.idea/
+*.iml

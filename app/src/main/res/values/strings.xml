@@ -2,5 +2,5 @@
     <string name="app_name">Tacita</string>
     <string name="notification_channel_name">Lock monitoring</string>
     <string name="notification_title">Tacita is monitoring</string>
-    <string name="notification_text">Media volume will be adjusted when the screen locks.</string>
+    <string name="notification_text">Media volume will be adjusted when the screen turns off.</string>
 </resources>
