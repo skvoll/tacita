@@ -190,7 +190,7 @@ private fun SettingsScreen(onEnabledChange: (Boolean) -> Unit) {
 private fun Header() {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 4.dp)) {
         AndroidView(
-            factory = { viewContext -> ImageView(viewContext).apply { setImageResource(R.mipmap.ic_launcher) } },
+            factory = { viewContext -> ImageView(viewContext).apply { setImageResource(R.drawable.tacita_header_icon) } },
             modifier = Modifier.size(72.dp),
         )
         Spacer(Modifier.width(16.dp))

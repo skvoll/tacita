@@ -9,22 +9,32 @@ const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const input = process.argv[2];
 
 if (!input || !existsSync(input)) {
-    console.error("Usage: node scripts/generate-launcher-icons.mjs /path/to/icon-sheet.png");
+    console.error("Usage: node scripts/generate-launcher-icons.mjs /path/to/tacita-icon.png");
     process.exit(1);
 }
 
-// The upper-left artwork in the supplied 1536 x 1024 sheet has no baked-in
-// launcher shape. Scale it to sit wholly inside Android's 66/108-dp safe zone.
-const destination = resolve(projectRoot, "app/src/main/res/drawable-nodpi/ic_launcher_foreground.png");
-mkdirSync(dirname(destination), { recursive: true });
+const drawableDirectory = resolve(projectRoot, "app/src/main/res/drawable-nodpi");
+mkdirSync(drawableDirectory, { recursive: true });
 
-const result = spawnSync(
-    "ffmpeg",
-    [
-        "-y", "-i", input,
-        "-vf", "crop=520:600:0:10,pad=600:600:0:0:color=0x00000000,scale=700:700:flags=lanczos,pad=1024:1024:162:162:color=0x00000000",
-        "-frames:v", "1", "-update", "1", destination,
-    ],
-    { stdio: "inherit" },
-);
-if (result.status !== 0) process.exit(result.status ?? 1);
+const outputs = [
+    {
+        name: "ic_launcher_foreground.png",
+        // Android's central safe zone is 66dp within a 108dp adaptive-icon canvas.
+        // The 620px art board leaves the full transparent illustration inside it.
+        filter: "scale=620:620:flags=lanczos,pad=1024:1024:202:202:color=0x00000000",
+    },
+    {
+        name: "tacita_header_icon.png",
+        // Separate presentation asset for the in-app title; no launcher mask is baked in.
+        filter: "scale=256:256:flags=lanczos",
+    },
+];
+
+for (const output of outputs) {
+    const result = spawnSync(
+        "ffmpeg",
+        ["-y", "-i", input, "-vf", output.filter, "-frames:v", "1", "-update", "1", resolve(drawableDirectory, output.name)],
+        { stdio: "inherit" },
+    );
+    if (result.status !== 0) process.exit(result.status ?? 1);
+}
