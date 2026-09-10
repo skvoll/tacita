@@ -1,0 +1,25 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Simplified silhouette. The system applies the user's themed-icon tint. -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M71,19C89,30 94,57 80,78C77,82 73,86 68,89C78,71 75,44 57,29C61,24 66,21 71,19Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M35,30C43,21 58,22 66,32C71,39 70,48 66,55C63,59 64,64 67,69L64,87L40,87C42,76 34,72 29,66C20,56 25,39 35,30Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M29,45C20,49 18,59 23,67C27,73 35,76 41,74C32,68 29,59 31,51Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M52,75C55,66 57,59 60,57C62,56 64,57 64,59L62,69L65,55C65,52 69,52 69,55L68,69C71,65 73,67 72,70L68,84C66,89 61,91 54,90Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M73,43L76,50L83,53L76,56L73,63L70,56L63,53L70,50Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M34,34C41,28 51,27 59,32L55,36C48,32 41,34 36,40Z" />
+</vector>
