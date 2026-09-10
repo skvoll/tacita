@@ -40,12 +40,16 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -64,6 +68,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
@@ -138,6 +144,7 @@ private fun TacitaTheme(content: @Composable () -> Unit) {
     MaterialTheme(colorScheme = colorScheme, content = content)
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SettingsScreen(onEnabledChange: (Boolean) -> Unit) {
     val context = LocalContext.current
@@ -146,13 +153,18 @@ private fun SettingsScreen(onEnabledChange: (Boolean) -> Unit) {
     val sliderMaximum = if (settings.allowVolumeAbove20) 100 else 20
     val targetPercent = settings.targetPercent.coerceIn(0, sliderMaximum)
 
-    Scaffold(containerColor = MaterialTheme.colorScheme.background) { innerPadding ->
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = { CollapsibleHeader(settings.enabled, scrollBehavior) },
+    ) { innerPadding ->
         Column(
-            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(innerPadding)
+            modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection)
+                .verticalScroll(rememberScrollState()).padding(innerPadding)
                 .padding(horizontal = 16.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Header()
             ToggleCard(
                 checked = settings.enabled,
                 onCheckedChange = onEnabledChange,
@@ -187,16 +199,55 @@ private fun SettingsScreen(onEnabledChange: (Boolean) -> Unit) {
 }
 
 @Composable
-private fun Header() {
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 4.dp)) {
-        AndroidView(
-            factory = { viewContext -> ImageView(viewContext).apply { setImageResource(R.drawable.tacita_header_icon) } },
-            modifier = Modifier.size(72.dp),
-        )
-        Spacer(Modifier.width(16.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text("Tacita", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-            Text("Lower media volume when your screen turns off.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
+@OptIn(ExperimentalMaterial3Api::class)
+private fun CollapsibleHeader(enabled: Boolean, scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior) {
+    val expandedContentAlpha = 1f - scrollBehavior.state.collapsedFraction
+    LargeTopAppBar(
+        title = {
+            Column {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    AndroidView(
+                        factory = { viewContext -> ImageView(viewContext).apply { setImageResource(R.drawable.tacita_header_icon) } },
+                        modifier = Modifier.size(48.dp),
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Text("Tacita", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+                }
+                Column(modifier = Modifier.graphicsLayer { alpha = expandedContentAlpha }) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "Lower media volume when your screen turns off.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    if (enabled) ActiveStatusChip()
+                }
+            }
+        },
+        scrollBehavior = scrollBehavior,
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.background,
+            scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+        ),
+    )
+}
+
+@Composable
+private fun ActiveStatusChip() {
+    Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = RoundedCornerShape(16.dp)) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(modifier = Modifier.size(8.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
+            Spacer(Modifier.width(8.dp))
+            Text(
+                "Tacita is active",
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Medium,
+            )
         }
     }
 }
