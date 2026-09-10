@@ -58,7 +58,9 @@ class LockMonitorService : Service() {
 
         audioManager.setStreamVolume(
             AudioManager.STREAM_MUSIC,
-            settings.targetVolume.coerceIn(0, audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)),
+            (audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) * settings.targetPercent / 100f)
+                .toInt()
+                .coerceIn(0, audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)),
             0,
         )
     }

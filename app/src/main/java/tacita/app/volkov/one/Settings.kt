@@ -12,20 +12,23 @@ private val Context.dataStore by preferencesDataStore(name = "settings")
 
 data class AppSettings(
     val enabled: Boolean = true,
-    val targetVolume: Int = 0,
+    val targetPercent: Int = 20,
     val includeBluetooth: Boolean = false,
+    val allowVolumeAbove20: Boolean = false,
 )
 
 object SettingsRepository {
     private val enabledKey = booleanPreferencesKey("enabled")
-    private val targetVolumeKey = intPreferencesKey("target_volume")
+    private val targetPercentKey = intPreferencesKey("target_percent")
     private val includeBluetoothKey = booleanPreferencesKey("include_bluetooth")
+    private val allowVolumeAbove20Key = booleanPreferencesKey("allow_volume_above_20")
 
     fun settings(context: Context): Flow<AppSettings> = context.dataStore.data.map { preferences ->
         AppSettings(
             enabled = preferences[enabledKey] ?: true,
-            targetVolume = preferences[targetVolumeKey] ?: 0,
+            targetPercent = preferences[targetPercentKey] ?: 20,
             includeBluetooth = preferences[includeBluetoothKey] ?: false,
+            allowVolumeAbove20 = preferences[allowVolumeAbove20Key] ?: false,
         )
     }
 
@@ -33,11 +36,18 @@ object SettingsRepository {
         context.dataStore.edit { it[enabledKey] = enabled }
     }
 
-    suspend fun updateTargetVolume(context: Context, targetVolume: Int) {
-        context.dataStore.edit { it[targetVolumeKey] = targetVolume.coerceAtLeast(0) }
+    suspend fun updateTargetPercent(context: Context, targetPercent: Int) {
+        context.dataStore.edit { it[targetPercentKey] = targetPercent.coerceIn(0, 100) }
     }
 
     suspend fun updateIncludeBluetooth(context: Context, includeBluetooth: Boolean) {
         context.dataStore.edit { it[includeBluetoothKey] = includeBluetooth }
+    }
+
+    suspend fun updateAllowVolumeAbove20(context: Context, allowed: Boolean) {
+        context.dataStore.edit {
+            it[allowVolumeAbove20Key] = allowed
+            if (!allowed && (it[targetPercentKey] ?: 20) > 20) it[targetPercentKey] = 20
+        }
     }
 }
