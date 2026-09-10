@@ -12,7 +12,7 @@ private val Context.dataStore by preferencesDataStore(name = "settings")
 
 data class AppSettings(
     val enabled: Boolean = true,
-    val targetPercent: Int = 20,
+    val targetPercent: Int = 5,
     val includeBluetooth: Boolean = false,
     val allowVolumeAbove20: Boolean = false,
 )
@@ -26,7 +26,7 @@ object SettingsRepository {
     fun settings(context: Context): Flow<AppSettings> = context.dataStore.data.map { preferences ->
         AppSettings(
             enabled = preferences[enabledKey] ?: true,
-            targetPercent = preferences[targetPercentKey] ?: 20,
+            targetPercent = preferences[targetPercentKey] ?: 5,
             includeBluetooth = preferences[includeBluetoothKey] ?: false,
             allowVolumeAbove20 = preferences[allowVolumeAbove20Key] ?: false,
         )
@@ -47,7 +47,7 @@ object SettingsRepository {
     suspend fun updateAllowVolumeAbove20(context: Context, allowed: Boolean) {
         context.dataStore.edit {
             it[allowVolumeAbove20Key] = allowed
-            if (!allowed && (it[targetPercentKey] ?: 20) > 20) it[targetPercentKey] = 20
+            if (!allowed && (it[targetPercentKey] ?: 5) > 20) it[targetPercentKey] = 20
         }
     }
 }
