@@ -17,3 +17,11 @@ When you enable monitoring, Tacita requests notification permission on Android 1
 - **Target volume:** target media-stream volume, default `5%`.
 - **Include Bluetooth devices:** when enabled, apply the rule even with a Bluetooth audio output connected; default `false`.
 - **Check when screen turns on:** when enabled, perform an additional volume check as the screen turns on; default `false`.
+
+## Architecture
+
+- `data`: persisted settings and their repository.
+- `domain`: platform-independent volume decisions, covered by JVM unit tests.
+- `platform`: Android audio APIs and connected-device detection.
+- `service`: screen-event monitoring and delayed check scheduling.
+- `ui`: Compose theme and settings presentation; `MainActivity` coordinates UI actions, permission, and service lifetime.

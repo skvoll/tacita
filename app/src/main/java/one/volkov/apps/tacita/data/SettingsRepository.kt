@@ -1,4 +1,4 @@
-package one.volkov.apps.tacita
+package one.volkov.apps.tacita.data
 
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -12,14 +12,6 @@ import kotlinx.coroutines.flow.map
 import java.io.IOException
 
 private val Context.dataStore by preferencesDataStore(name = "settings")
-
-data class AppSettings(
-    val enabled: Boolean = false,
-    val targetPercent: Int = 5,
-    val includeBluetooth: Boolean = false,
-    val allowVolumeAbove20: Boolean = false,
-    val checkOnScreenOn: Boolean = false,
-)
 
 object SettingsRepository {
     private val enabledKey = booleanPreferencesKey("enabled")

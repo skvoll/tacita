@@ -23,7 +23,7 @@
         </activity>
 
         <service
-            android:name=".LockMonitorService"
+            android:name=".service.LockMonitorService"
             android:exported="false"
             android:foregroundServiceType="specialUse">
             <property
