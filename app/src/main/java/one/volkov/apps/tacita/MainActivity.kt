@@ -190,6 +190,15 @@ private fun SettingsScreen(onEnabledChange: (Boolean) -> Unit) {
                 title = "Allow volume above 20%",
                 supportingText = "Allows Tacita to use higher target volume levels.",
             )
+            ToggleCard(
+                checked = settings.checkOnScreenOn,
+                onCheckedChange = { enabled ->
+                    scope.launch { SettingsRepository.updateCheckOnScreenOn(context, enabled) }
+                },
+                icon = Icons.Default.Lock,
+                title = "Check when screen turns on",
+                supportingText = "Also check and lower media volume when the screen turns on.",
+            )
             BluetoothCard(settings.includeBluetooth) { enabled ->
                 scope.launch { SettingsRepository.updateIncludeBluetooth(context, enabled) }
             }
@@ -372,7 +381,7 @@ private fun HowItWorksCard(includeBluetooth: Boolean) {
         Spacer(Modifier.height(4.dp))
         HowItWorksRow(Icons.Default.PlayArrow, "If media is playing", "Do nothing")
         HowItWorksRow(TacitaIcons.Bluetooth, "If Bluetooth audio is connected", if (includeBluetooth) "Apply selected level" else "Ignore by default")
-        HowItWorksRow(Icons.Default.Lock, "When screen turns off and playback is idle", "Lower volume to selected level")
+        HowItWorksRow(Icons.Default.Lock, "When screen turns off", "Check immediately and again after 1 minute")
     }
 }
 

@@ -1,6 +1,6 @@
 # Tacita
 
-Tacita sets the media volume when the phone screen turns off, unless media is playing. It leaves the volume alone whenever a Bluetooth audio device is connected by default. Monitoring is opt-in and is disabled on a fresh install.
+Tacita sets the media volume when the phone screen turns off, then checks again one minute later in case another app starts playback during the lock transition. It never raises the current volume. It leaves the volume alone whenever a Bluetooth audio device is connected by default. Monitoring is opt-in and is disabled on a fresh install.
 
 ## Build
 
@@ -16,3 +16,4 @@ When you enable monitoring, Tacita requests notification permission on Android 1
 
 - **Target volume:** target media-stream volume, default `5%`.
 - **Include Bluetooth devices:** when enabled, apply the rule even with a Bluetooth audio output connected; default `false`.
+- **Check when screen turns on:** when enabled, perform an additional volume check as the screen turns on; default `false`.

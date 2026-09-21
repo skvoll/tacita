@@ -18,6 +18,7 @@ data class AppSettings(
     val targetPercent: Int = 5,
     val includeBluetooth: Boolean = false,
     val allowVolumeAbove20: Boolean = false,
+    val checkOnScreenOn: Boolean = false,
 )
 
 object SettingsRepository {
@@ -25,6 +26,7 @@ object SettingsRepository {
     private val targetPercentKey = intPreferencesKey("target_percent")
     private val includeBluetoothKey = booleanPreferencesKey("include_bluetooth")
     private val allowVolumeAbove20Key = booleanPreferencesKey("allow_volume_above_20")
+    private val checkOnScreenOnKey = booleanPreferencesKey("check_on_screen_on")
 
     fun settings(context: Context): Flow<AppSettings> = context.dataStore.data
         .catch { error ->
@@ -40,6 +42,7 @@ object SettingsRepository {
                 ),
                 includeBluetooth = preferences[includeBluetoothKey] ?: false,
                 allowVolumeAbove20 = allowVolumeAbove20,
+                checkOnScreenOn = preferences[checkOnScreenOnKey] ?: false,
             )
         }
 
@@ -63,5 +66,9 @@ object SettingsRepository {
             it[allowVolumeAbove20Key] = allowed
             if (!allowed && (it[targetPercentKey] ?: 5) > 20) it[targetPercentKey] = 20
         }
+    }
+
+    suspend fun updateCheckOnScreenOn(context: Context, enabled: Boolean) {
+        context.dataStore.edit { it[checkOnScreenOnKey] = enabled }
     }
 }

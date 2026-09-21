@@ -16,6 +16,8 @@ import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.cancel
@@ -24,11 +26,23 @@ import kotlin.math.roundToInt
 class LockMonitorService : Service() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var screenReceiverRegistered = false
+    private var screenOffCheckJob: Job? = null
 
     private val screenReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            if (intent.action == Intent.ACTION_SCREEN_OFF) {
-                adjustVolumeForLock()
+            when (intent.action) {
+                Intent.ACTION_SCREEN_OFF -> {
+                    screenOffCheckJob?.cancel()
+                    screenOffCheckJob = serviceScope.launch {
+                        adjustVolumeForLock()
+                        delay(SCREEN_OFF_FOLLOW_UP_DELAY_MS)
+                        adjustVolumeForLock()
+                    }
+                }
+                Intent.ACTION_SCREEN_ON -> serviceScope.launch {
+                    val settings = SettingsRepository.settings(applicationContext).first()
+                    if (settings.checkOnScreenOn) adjustVolumeForLock()
+                }
             }
         }
     }
@@ -50,19 +64,22 @@ class LockMonitorService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    private fun adjustVolumeForLock() = serviceScope.launch {
+    private suspend fun adjustVolumeForLock() {
         val settings = SettingsRepository.settings(applicationContext).first()
-        val audioManager = getSystemService(AudioManager::class.java) ?: return@launch
+        val audioManager = getSystemService(AudioManager::class.java) ?: return
 
-        if (!settings.enabled) return@launch
-        if (audioManager.isMusicActive) return@launch
-        if (!settings.includeBluetooth && audioManager.hasBluetoothOutput()) return@launch
+        if (!settings.enabled) return
+        if (audioManager.isMusicActive) return
+        if (!settings.includeBluetooth && audioManager.hasBluetoothOutput()) return
 
         val maximumVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
         val targetVolume = (maximumVolume * settings.targetPercent / 100f)
             .roundToInt()
             .coerceIn(0, maximumVolume)
-        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, targetVolume, 0)
+        val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+        if (targetVolume < currentVolume) {
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, targetVolume, 0)
+        }
     }
 
     private fun AudioManager.hasBluetoothOutput(): Boolean = getDevices(AudioManager.GET_DEVICES_OUTPUTS)
@@ -71,7 +88,10 @@ class LockMonitorService : Service() {
         }
 
     private fun registerScreenReceiver() {
-        val filter = IntentFilter(Intent.ACTION_SCREEN_OFF)
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_OFF)
+            addAction(Intent.ACTION_SCREEN_ON)
+        }
         ContextCompat.registerReceiver(this, screenReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
         screenReceiverRegistered = true
     }
@@ -95,6 +115,7 @@ class LockMonitorService : Service() {
     private companion object {
         const val CHANNEL_ID = "lock_monitor"
         const val NOTIFICATION_ID = 1
+        const val SCREEN_OFF_FOLLOW_UP_DELAY_MS = 60_000L
 
         val bluetoothDeviceTypes: Set<Int> = buildSet {
             add(AudioDeviceInfo.TYPE_BLUETOOTH_A2DP)
