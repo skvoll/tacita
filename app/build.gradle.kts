@@ -16,6 +16,7 @@ android {
     }
 
     buildFeatures { compose = true }
+    testOptions.unitTests.isIncludeAndroidResources = true
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -43,5 +44,8 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.datastore.preferences)
     testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

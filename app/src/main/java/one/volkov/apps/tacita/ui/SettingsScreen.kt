@@ -1,7 +1,6 @@
 package one.volkov.apps.tacita.ui
 
 import android.os.Build
-import android.widget.ImageView
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -9,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,17 +28,19 @@ import androidx.compose.material.icons.automirrored.filled.VolumeDown
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Bluetooth
+import androidx.compose.material.icons.filled.BluetoothDisabled
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.PhonelinkLock
+import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LargeTopAppBar
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -55,10 +57,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
@@ -67,23 +66,8 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import kotlin.math.roundToInt
-import one.volkov.apps.tacita.R
 import one.volkov.apps.tacita.data.AppSettings
-
-private object TacitaIcons {
-    val Bluetooth = ImageVector.Builder("Bluetooth", 24.dp, 24.dp, 24f, 24f).apply {
-        path(fill = SolidColor(Color.Black)) {
-            moveTo(12f, 2f); lineTo(17.5f, 7.5f); lineTo(13f, 12f); lineTo(17.5f, 16.5f)
-            lineTo(12f, 22f); verticalLineTo(14.8f); lineTo(7.5f, 19.3f); lineTo(6.1f, 17.9f)
-            lineTo(11.2f, 12.8f); lineTo(6.1f, 7.7f); lineTo(7.5f, 6.3f); lineTo(12f, 10.8f); close()
-            moveTo(14f, 6.8f); verticalLineTo(10.2f); lineTo(15.7f, 8.5f); close()
-            moveTo(14f, 13.8f); verticalLineTo(17.2f); lineTo(15.7f, 15.5f); close()
-        }
-    }.build()
-}
 
 @Composable
 fun TacitaTheme(content: @Composable () -> Unit) {
@@ -113,145 +97,107 @@ fun SettingsScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = { CollapsibleHeader(settings.enabled, scrollBehavior) },
     ) { innerPadding ->
         Column(
-            modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection)
-                .verticalScroll(rememberScrollState()).padding(innerPadding)
+            modifier = Modifier.fillMaxSize().padding(innerPadding)
+                .consumeWindowInsets(innerPadding).verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            ToggleCard(
-                checked = settings.enabled,
-                onCheckedChange = onEnabledChange,
-                icon = Icons.Default.Lock,
-                title = "Lower volume when screen turns off",
-                supportingText = "Automatically lower media volume when your screen turns off.",
-                emphasized = true,
+            val mainCardColor by animateColorAsState(
+                if (settings.enabled) MaterialTheme.colorScheme.secondaryContainer
+                else MaterialTheme.colorScheme.surfaceContainerLow,
+                label = "mainCardColor",
             )
-            TargetVolumeCard(
-                targetPercent = targetPercent,
-                extendedRange = settings.allowVolumeAbove20,
-                onValueChange = onTargetPercentChange,
-            )
-            ToggleCard(
-                checked = settings.allowVolumeAbove20,
-                onCheckedChange = onAllowVolumeAbove20Change,
-                icon = Icons.AutoMirrored.Filled.VolumeUp,
-                title = "Allow volume above 20%",
-                supportingText = "Allows Tacita to use higher target volume levels.",
-            )
-            ToggleCard(
-                checked = settings.checkOnScreenOn,
-                onCheckedChange = onCheckOnScreenOnChange,
-                icon = Icons.Default.Lock,
-                title = "Check when screen turns on",
-                supportingText = "Also check and lower media volume when the screen turns on.",
-            )
-            BluetoothCard(settings.includeBluetooth, onIncludeBluetoothChange)
-            HowItWorksCard(settings.includeBluetooth)
+            SettingCard(mainCardColor) {
+                ToggleRow(
+                    checked = settings.enabled,
+                    onCheckedChange = onEnabledChange,
+                    icon = if (settings.enabled) Icons.Default.PhonelinkLock else Icons.Default.PhoneAndroid,
+                    title = "Lower volume when screen turns off",
+                    supportingText = if (settings.enabled) "On · Automatically lower media volume when your screen turns off."
+                    else "Off · Your media volume stays unchanged.",
+                )
+                if (settings.enabled) {
+                    ToggleSubsection(
+                        checked = settings.checkOnScreenOn,
+                        onCheckedChange = onCheckOnScreenOnChange,
+                        icon = if (settings.checkOnScreenOn) PhonelinkUnlock else Icons.Default.PhoneAndroid,
+                        title = "Check when screen turns on",
+                        supportingText = if (settings.checkOnScreenOn) "On · Also lower volume when your screen turns on."
+                        else "Off · Only check when your screen turns off.",
+                    )
+                }
+            }
+            if (settings.enabled) {
+                TargetVolumeCard(
+                    targetPercent = targetPercent,
+                    extendedRange = settings.allowVolumeAbove20,
+                    onValueChange = onTargetPercentChange,
+                    onExtendedRangeChange = onAllowVolumeAbove20Change,
+                )
+                BluetoothCard(settings.includeBluetooth, onIncludeBluetoothChange)
+            }
+            HowItWorksCard(settings)
             Footer()
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CollapsibleHeader(
-    enabled: Boolean,
-    scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior,
-) {
-    val expandedContentAlpha = 1f - scrollBehavior.state.collapsedFraction
-    val headerIconSize = 48.dp + (28.dp * expandedContentAlpha)
-    val titleSize = (22f + 10f * expandedContentAlpha).sp
-    LargeTopAppBar(
-        title = {
-            Column {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    AndroidView(
-                        factory = { context -> ImageView(context).apply { setImageResource(R.drawable.tacita_header_icon) } },
-                        modifier = Modifier.size(headerIconSize),
-                    )
-                    Spacer(Modifier.width(16.dp))
-                    Text("Tacita", fontSize = titleSize, lineHeight = titleSize, fontWeight = FontWeight.Bold)
-                }
-                Column(modifier = Modifier.graphicsLayer { alpha = expandedContentAlpha }) {
-                    Spacer(Modifier.height(12.dp))
-                    Text(
-                        "Lower media volume when your screen turns off.",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    if (enabled) ActiveStatusChip()
-                }
-            }
-        },
-        scrollBehavior = scrollBehavior,
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-            scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-        ),
-        expandedHeight = 220.dp,
-    )
-}
-
-@Composable
-private fun ActiveStatusChip() {
-    Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = RoundedCornerShape(16.dp)) {
-        Row(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(modifier = Modifier.size(8.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
-            Spacer(Modifier.width(8.dp))
-            Text(
-                "Tacita is active",
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Medium,
-            )
-        }
-    }
-}
-
-@Composable
-private fun ToggleCard(
+private fun ToggleRow(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     icon: ImageVector,
     title: String,
     supportingText: String,
-    emphasized: Boolean = false,
+    compact: Boolean = false,
 ) {
-    val containerColor by animateColorAsState(
-        if (emphasized && checked) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
-        label = "settingCardColor",
-    )
-    SettingCard(
-        containerColor = containerColor,
-        modifier = Modifier.toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange),
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange)
+            .semantics { stateDescription = if (checked) "On" else "Off" }
+            .heightIn(min = 48.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+        if (compact) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+        } else {
             SettingIcon(icon)
-            Spacer(Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text(supportingText, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
-            }
-            Spacer(Modifier.width(12.dp))
-            Switch(
-                checked = checked,
-                onCheckedChange = onCheckedChange,
-                modifier = Modifier.semantics { stateDescription = if (checked) "On" else "Off" },
-            )
         }
+        Spacer(Modifier.width(if (compact) 12.dp else 16.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, style = if (compact) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(supportingText, color = MaterialTheme.colorScheme.onSurfaceVariant, style = if (compact) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium)
+        }
+        Spacer(Modifier.width(12.dp))
+        Switch(checked = checked, onCheckedChange = null)
     }
 }
 
 @Composable
-private fun TargetVolumeCard(targetPercent: Int, extendedRange: Boolean, onValueChange: (Int) -> Unit) {
+private fun ToggleSubsection(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    icon: ImageVector,
+    title: String,
+    supportingText: String,
+) {
+    Column(Modifier.padding(start = 16.dp)) {
+        HorizontalDivider(Modifier.padding(vertical = 12.dp))
+        ToggleRow(checked, onCheckedChange, icon, title, supportingText, compact = true)
+    }
+}
+
+@Composable
+private fun TargetVolumeCard(
+    targetPercent: Int,
+    extendedRange: Boolean,
+    onValueChange: (Int) -> Unit,
+    onExtendedRangeChange: (Boolean) -> Unit,
+) {
     val maximum = if (extendedRange) 100 else 20
     val steps = if (extendedRange) 19 else 3
     var livePercent by remember { mutableFloatStateOf(targetPercent.toFloat()) }
@@ -268,7 +214,7 @@ private fun TargetVolumeCard(targetPercent: Int, extendedRange: Boolean, onValue
             Spacer(Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text("Target volume", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text("Set the media volume level to use when your screen turns off.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
+                Text(if (displayedPercent == 0) "Mute media when checked." else "Lower media volume to $displayedPercent% when checked. Never raises volume.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
             }
             Spacer(Modifier.width(12.dp))
             Box(modifier = Modifier.width(52.dp), contentAlignment = Alignment.CenterEnd) {
@@ -293,26 +239,27 @@ private fun TargetVolumeCard(targetPercent: Int, extendedRange: Boolean, onValue
         if (extendedRange) {
             Text("20% is Tacita’s recommended limit.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
         }
+        ToggleSubsection(
+            checked = extendedRange,
+            onCheckedChange = onExtendedRangeChange,
+            icon = if (extendedRange) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeDown,
+            title = "Allow volume above 20%",
+            supportingText = if (extendedRange) "On · Choose a target up to 100%." else "Off · Target volume is limited to 20%.",
+        )
     }
 }
 
 @Composable
 private fun BluetoothCard(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    val containerColor by animateColorAsState(MaterialTheme.colorScheme.surfaceContainerLow, label = "bluetoothCardColor")
-    SettingCard(
-        containerColor = containerColor,
-        modifier = Modifier.toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            SettingIcon(TacitaIcons.Bluetooth)
-            Spacer(Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text("Apply to Bluetooth audio", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text("Also lower media volume when a Bluetooth audio device is connected.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
-            }
-            Spacer(Modifier.width(12.dp))
-            Switch(checked = checked, onCheckedChange = onCheckedChange, modifier = Modifier.semantics { stateDescription = if (checked) "On" else "Off" })
-        }
+    SettingCard(MaterialTheme.colorScheme.surfaceContainerLow) {
+        ToggleRow(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            icon = if (checked) Icons.Default.Bluetooth else Icons.Default.BluetoothDisabled,
+            title = "Apply to Bluetooth audio",
+            supportingText = if (checked) "On · Also lower volume on Bluetooth audio devices."
+            else "Off · Leave Bluetooth audio volume unchanged.",
+        )
         Spacer(Modifier.height(14.dp))
         Row(
             modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(12.dp)).padding(12.dp),
@@ -320,19 +267,28 @@ private fun BluetoothCard(checked: Boolean, onCheckedChange: (Boolean) -> Unit) 
         ) {
             Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(20.dp))
             Spacer(Modifier.width(10.dp))
-            Text("Off by default to avoid changing headphone or car audio volume.", color = MaterialTheme.colorScheme.onSecondaryContainer, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+            Text(if (checked) "The target also applies to headphone and car audio volume." else "Headphone and car audio volume are left unchanged.", color = MaterialTheme.colorScheme.onSecondaryContainer, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
         }
     }
 }
 
 @Composable
-private fun HowItWorksCard(includeBluetooth: Boolean) {
+private fun HowItWorksCard(settings: AppSettings) {
     SettingCard(MaterialTheme.colorScheme.surfaceContainerLow) {
         Text("How it works", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(4.dp))
-        HowItWorksRow(Icons.Default.PlayArrow, "If media is playing", "Do nothing")
-        HowItWorksRow(TacitaIcons.Bluetooth, "If Bluetooth audio is connected", if (includeBluetooth) "Apply selected level" else "Ignore by default")
-        HowItWorksRow(Icons.Default.Lock, "When screen turns off", "Check immediately and again after 1 minute")
+        if (settings.enabled) {
+            HowItWorksRow(Icons.Default.PlayArrow, "If media is playing", "Do nothing")
+            HowItWorksRow(if (settings.includeBluetooth) Icons.Default.Bluetooth else Icons.Default.BluetoothDisabled, "If Bluetooth audio is connected", if (settings.includeBluetooth) "Lower to ${settings.targetPercent}% if above target" else "Leave volume unchanged")
+            HowItWorksRow(Icons.Default.PhonelinkLock, "When screen turns off", "Lower to ${settings.targetPercent}% if above target; check again after 1 minute")
+            HowItWorksRow(if (settings.checkOnScreenOn) PhonelinkUnlock else Icons.Default.PhoneAndroid, "When screen turns on", if (settings.checkOnScreenOn) "Also check and lower to ${settings.targetPercent}%" else "Leave volume unchanged")
+        } else {
+            HowItWorksRow(Icons.Default.Info, "Start with the switch above", "Tacita is disabled. Turn it on, then choose how quiet you want your media volume to be.")
+            HowItWorksRow(Icons.Default.PhonelinkLock, "Put your phone away", "When your screen turns off, Tacita lowers media volume to your chosen level and checks again after a minute. It never turns the volume up.")
+            HowItWorksRow(Icons.Default.PlayArrow, "Keep listening", "Music and videos already playing keep their volume. Your ringtone and alarms stay unchanged too.")
+            HowItWorksRow(Icons.Default.Bluetooth, "Choose what happens with Bluetooth", "Headphones and car audio are left alone by default. You can choose to lower their volume too.")
+            HowItWorksRow(PhonelinkUnlock, "Check when you wake your phone", "You can also have Tacita lower media volume when your screen turns on.")
+        }
     }
 }
 
