@@ -95,9 +95,9 @@ internal fun CollapsibleHeader(
                 // One dot moves from the status chip to the title throughout collapse.
                 Box(
                     Modifier.size(8.dp).testTag("statusDot").background(
-                        lerp(
+                        if (enabled) Color(0xFF2E7D32) else lerp(
                             MaterialTheme.colorScheme.onSurface,
-                            if (enabled) Color(0xFF2E7D32) else MaterialTheme.colorScheme.onSurfaceVariant,
+                            MaterialTheme.colorScheme.onSurfaceVariant,
                             1f - state.collapsedFraction,
                         ),
                         CircleShape,

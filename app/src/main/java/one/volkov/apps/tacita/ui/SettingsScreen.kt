@@ -56,6 +56,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -116,7 +117,7 @@ fun SettingsScreen(
                 ToggleRow(
                     checked = settings.enabled,
                     onCheckedChange = onEnabledChange,
-                    icon = if (settings.enabled) Icons.Default.PhonelinkLock else Icons.Default.PhoneAndroid,
+                    icon = if (settings.enabled) Icons.AutoMirrored.Filled.VolumeDown else Icons.AutoMirrored.Filled.VolumeUp,
                     title = "Lower volume when screen turns off",
                     supportingText = if (settings.enabled) "On · Automatically lower media volume when your screen turns off."
                     else "Off · Your media volume stays unchanged.",
@@ -125,7 +126,7 @@ fun SettingsScreen(
                     ToggleSubsection(
                         checked = settings.checkOnScreenOn,
                         onCheckedChange = onCheckOnScreenOnChange,
-                        icon = if (settings.checkOnScreenOn) PhonelinkUnlock else Icons.Default.PhoneAndroid,
+                        icon = null,
                         title = "Check when screen turns on",
                         supportingText = if (settings.checkOnScreenOn) "On · Also lower volume when your screen turns on."
                         else "Off · Only check when your screen turns off.",
@@ -151,23 +152,27 @@ fun SettingsScreen(
 private fun ToggleRow(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
-    icon: ImageVector,
+    icon: ImageVector?,
     title: String,
     supportingText: String,
     compact: Boolean = false,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange)
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+            .toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange)
             .semantics { stateDescription = if (checked) "On" else "Off" }
+            .padding(8.dp)
             .heightIn(min = 48.dp),
     ) {
-        if (compact) {
-            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
-        } else {
-            SettingIcon(icon)
+        if (icon != null) {
+            if (compact) {
+                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+            } else {
+                SettingIcon(icon)
+            }
+            Spacer(Modifier.width(if (compact) 12.dp else 16.dp))
         }
-        Spacer(Modifier.width(if (compact) 12.dp else 16.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(title, style = if (compact) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Text(supportingText, color = MaterialTheme.colorScheme.onSurfaceVariant, style = if (compact) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium)
@@ -181,12 +186,15 @@ private fun ToggleRow(
 private fun ToggleSubsection(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
-    icon: ImageVector,
+    icon: ImageVector?,
     title: String,
     supportingText: String,
 ) {
     Column(Modifier.padding(start = 16.dp)) {
-        HorizontalDivider(Modifier.padding(vertical = 12.dp))
+        HorizontalDivider(
+            modifier = Modifier.padding(vertical = 12.dp),
+            color = MaterialTheme.colorScheme.outline,
+        )
         ToggleRow(checked, onCheckedChange, icon, title, supportingText, compact = true)
     }
 }
