@@ -19,10 +19,10 @@ The policy source is [docs/privacy-policy/index.html](docs/privacy-policy/index.
 ### Publishing
 
 1. In the repository's **Settings → Pages → Build and deployment**, select **GitHub Actions** as the source. See [GitHub's setup instructions](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site#publishing-with-a-custom-github-actions-workflow).
-2. Push the policy and `.github/workflows/pages.yml` to `master`. The **Publish privacy policy** workflow deploys only the `docs/` directory. Later pushes affecting `docs/**` or that workflow publish updates automatically.
-3. To publish manually, run **Publish privacy policy** from the Actions tab with `master` selected. The workflow's deployment environment links to the published site.
+2. Push the policy and `.github/workflows/pages.yml` to `main`. The **Publish privacy policy** workflow deploys only the `docs/` directory. Later pushes affecting `docs/**` or that workflow publish updates automatically.
+3. To publish manually, run **Publish privacy policy** from the Actions tab with `main` selected. The workflow's deployment environment links to the published site.
 
-The workflow uses GitHub's built-in token; no custom secret, site generator, or Android build is needed. It only deploys from `master`, including manual runs. If the default branch changes, update both the push branch filter and the job condition in the workflow.
+The workflow uses GitHub's built-in token; no custom secret, site generator, or Android build is needed. It only deploys from `main`, including manual runs. If the default branch changes, update both the push branch filter and the job condition in the workflow.
 
 ### Editing and previewing
 
