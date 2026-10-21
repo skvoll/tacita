@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Tacita's privacy policy: device state and preferences stay on your Android device. No accounts, ads, or analytics.">
+    <meta name="theme-color" content="#0d1a2c">
+    <title>Privacy Policy — Tacita</title>
+    <link rel="icon" type="image/png" href="../assets/tacita.png">
+    <link rel="stylesheet" href="../styles.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#policy">Skip to policy</a>
+    <div class="page">
+      <header class="hero">
+        <div class="brand">
+          <img class="brand-icon" src="../assets/tacita.png" alt="" width="160" height="160">
+          <div>
+            <p class="wordmark">Tacita</p>
+            <h1>Privacy Policy</h1>
+          </div>
+        </div>
+        <p class="updated">Last updated: <time datetime="2026-10-21">October 21, 2026</time></p>
+        <p class="intro">Tacita is an Android application developed by an independent developer. It automatically lowers media volume based on screen state and your preferences. Monitoring is off by default and starts when you enable it.</p>
+      </header>
+
+    <main id="policy" class="policy" tabindex="-1">
+      <h2>Data Collection</h2>
+      <p>The Tacita app does not collect, transmit, sell, or share personal information. It does not require registration or an account, does not request Internet access, and does not communicate with external servers.</p>
+
+      <h2>Device Access</h2>
+      <p>When monitoring is enabled, Tacita uses Android system capabilities to detect screen-on and screen-off events, check whether media playback is active, read the current and maximum media volume, detect connected Bluetooth audio output types, and lower media volume according to your settings.</p>
+      <p>These checks happen locally on your device. Tacita does not record audio, read media content, or store a history of screen events, playback, volume levels, or connected devices. It does not read Bluetooth device names or addresses.</p>
+      <p>Tacita uses a foreground service to keep monitoring active in the background. On Android 13 and later, it requests permission to show its ongoing monitoring notification. This does not give Tacita access to other apps' notifications.</p>
+
+      <h2>Local Storage</h2>
+      <p>Tacita stores the following preferences in private application storage on your device, using Android DataStore:</p>
+      <ul>
+        <li>Whether monitoring is enabled.</li>
+        <li>Your target media volume.</li>
+        <li>Whether volume adjustments include Bluetooth audio devices.</li>
+        <li>Whether target volumes above 20% are allowed.</li>
+        <li>Whether to check volume when the screen turns on.</li>
+      </ul>
+      <p>These preferences are used solely to provide the app's functionality. Tacita disables Android application backup and excludes its settings from Android cloud backup and device transfer through its backup rules.</p>
+
+      <h2>Third-Party Services</h2>
+      <p>The Tacita app does not use third-party analytics, advertising services, tracking SDKs, or crash-reporting services.</p>
+
+      <h2>Data Retention and Deletion</h2>
+      <p>Tacita does not maintain external databases containing app user information. Preferences remain on your device until you clear the app's storage or uninstall it. You can stop monitoring at any time by turning it off in the app.</p>
+
+      <h2>Security</h2>
+      <p>Tacita processes device state locally and keeps preferences in Android's private application storage. It does not transmit this information to the developer or to external servers.</p>
+
+      <h2>This Website</h2>
+      <p>This policy page is hosted on GitHub Pages. GitHub logs visitors' IP addresses for security purposes, as described in its <a href="https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages#data-collection">GitHub Pages documentation</a> and <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">Privacy Statement</a>. This page includes no analytics, tracking scripts, or external fonts.</p>
+
+      <h2>Changes to This Policy</h2>
+      <p>This privacy policy may be updated if the app's functionality or data practices change. Updates will be published on this page with a revised date.</p>
+
+      <h2>Contact</h2>
+      <p>For privacy-related questions, contact <a href="mailto:tacita@volkov.one">tacita@volkov.one</a>.</p>
+      <p>If you choose to email the developer, your email address and the contents of your message will be received and used to respond to your inquiry.</p>
+    </main>
+      <footer class="footer">
+        <p>Tacita · A little more quiet.</p>
+        <a href="mailto:tacita@volkov.one">tacita@volkov.one</a>
+      </footer>
+    </div>
+  </body>
+</html>
